@@ -13,25 +13,25 @@
 
 namespace gkm {
 
-class Util {
+class utils {
 public:
-    Util();
-    virtual ~Util();
-    static Thread_State create_thread_state_from_str(const string& s_ts,
+    utils();
+     ~utils();
+    static thread_state create_thread_state_from_str(const string& s_ts,
             const char& delim = '|');
-    static Thread_State create_thread_state_from_gs_str(const string& s_ts,
+    static thread_state create_thread_state_from_gs_str(const string& s_ts,
             const char& delim = '|');
 
     static void print_adj_list(
-            const map<Thread_State, set<Thread_State> >& adj_list,
+            const map<thread_state, set<thread_state> >& adj_list,
             ostream& out = cout);
     static void print_adj_list(
-            const map<Thread_State, deque<Thread_State> >& adj_list,
+            const map<thread_state, deque<thread_state> >& adj_list,
             ostream& out = cout);
 
 };
 
-class Parser {
+class iparser {
 public:
     static void remove_comments(istream& in, const string& filename,
             const string& comment);

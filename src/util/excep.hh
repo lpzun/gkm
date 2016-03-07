@@ -16,25 +16,25 @@ using std::runtime_error;
 using std::exception;
 using std::string;
 namespace gkm {
-class bws_runtime_error: public runtime_error {
+class gkm_runtime_error: public runtime_error {
 public:
-    bws_runtime_error() :
+    gkm_runtime_error() :
             runtime_error("") {
     }
-    bws_runtime_error(const std::string& msg) :
+    gkm_runtime_error(const std::string& msg) :
             runtime_error(msg) {
     }
 };
 
-class bws_exception: public exception {
+class gkm_exception: public exception {
 public:
     string message;
     short code;
-    inline bws_exception() :
+    inline gkm_exception() :
             message(""), code(-1) {
 
     }
-    inline bws_exception(const string& message, const short& code = -1) :
+    inline gkm_exception(const string& message, const short& code = -1) :
             message(message), code(code) {
     }    // must provide some message
 

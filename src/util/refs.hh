@@ -13,7 +13,7 @@ namespace gkm {
 
 using vertex = unsigned int;
 /// adjacency list
-using adj_list = map<Thread_State, deque<Thread_State>>;
+using adj_list = map<thread_state, deque<thread_state>>;
 
 class Refs {
 public:

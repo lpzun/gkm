@@ -47,7 +47,7 @@ short compare_map(const map<ushort, ushort>& m1,
         }
         s1_iter++, s2_iter++;
     }
-    throw gkm::bws_runtime_error("COMPARE::compare: internal");
+    throw gkm::gkm_runtime_error("COMPARE::compare: internal");
 }
 
 /**
@@ -76,7 +76,7 @@ template<class T> short compare_container(const T& x, const T& y) {
             return +1;
         ++xi, ++yi;
     }
-    throw gkm::bws_runtime_error("COMPARE::compare: internal");
+    throw gkm::gkm_runtime_error("COMPARE::compare: internal");
 }
 }
 

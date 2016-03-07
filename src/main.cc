@@ -42,8 +42,9 @@ int main(const int argc, const char * const * const argv) {
                 "--initial");
         const string& final_ts = cmd.arg_value(cmd_line::prob_inst_opts(),
                 "--target");
-
-        bool is_reachable = false;
+        GKM km;
+        bool is_reachable = km.reachability_analysis_via_gkm(filename, initl_ts,
+                final_ts);
         cout << "======================================================\n";
         cout << " (" << final_ts << ")";
         if (is_reachable)
@@ -53,16 +54,13 @@ int main(const int argc, const char * const * const argv) {
         cout << "======================================================"
                 << endl;
 
-    } catch (const bws_exception & e) {
+    } catch (const gkm_exception & e) {
         e.what();
     } catch (const std::exception& e) {
         std::cerr << e.what() << endl;
     } catch (...) {
-        std::cerr << bws_exception("main: unknown exception occurred").what()
+        std::cerr << gkm_exception("main: unknown exception occurred").what()
                 << endl;
     }
 }
-
-
-
 

@@ -31,10 +31,12 @@
 #include <utility>
 #include <iterator>
 #include <algorithm>
-#include <memory>
 
-#include "excep.hh"
+#include <memory>
+#include <limits>
+
 #include "debug.hh"
+#include "excep.hh"
 
 using std::string;
 
