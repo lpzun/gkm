@@ -234,10 +234,10 @@ bool GKM::standard_FWS(const size_p& n, const size_p& s) {
 }
 
 /**
- * @brief
+ * @brief image computation for finite state search
  * @param tau
  * @param spw
- * @return
+ * @return the set of post images
  */
 deque<global_state> GKM::step(const global_state& tau, size_p& spw) {
     deque<global_state> images;
@@ -276,7 +276,7 @@ deque<global_state> GKM::step(const global_state& tau, size_p& spw) {
  * @param explored
  * @return
  */
-bool GKM::is_explored(const global_state& s, antichain& explored) {
+bool GKM::is_explored(const global_state& s, const antichain& explored) {
     for (auto itau = explored.begin(); itau != explored.end(); ++itau) {
         if (this->is_covered(s, *itau)) {
             return true;
@@ -290,9 +290,11 @@ bool GKM::is_explored(const global_state& s, antichain& explored) {
  * @param worklist
  */
 void GKM::maximize(const global_state& s, antichain& worklist) {
-    for (auto itau = worklist.begin(); itau != worklist.end(); ++itau) {
+    for (auto itau = worklist.begin(); itau != worklist.end();) {
         if (this->is_covered(*itau, s)) {
-            worklist.erase(itau);
+            itau = worklist.erase(itau);
+        } else {
+            ++itau;
         }
     }
 }

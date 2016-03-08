@@ -58,8 +58,8 @@ private:
 
     global_state w_acceleration(const global_state& tau);
 
-    bool is_explored(const global_state& s, antichain& explored);
-    void maximize(const global_state& s,antichain& worklist);
+    bool is_explored(const global_state& s, const antichain& explored);
+    void maximize(const global_state& s, antichain& worklist);
 
     thread_state set_up_TS(const string& s_ts);
 };
