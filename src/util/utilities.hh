@@ -9,7 +9,7 @@
 #define UTILITIES_HH_
 
 #include "heads.hh"
-#include "refs.hh"
+#include "state.hh"
 
 namespace gkm {
 

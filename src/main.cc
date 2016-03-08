@@ -43,6 +43,7 @@ int main(const int argc, const char * const * const argv) {
         const string& final_ts = cmd.arg_value(cmd_line::prob_inst_opts(),
                 "--target");
         GKM km;
+//        km.test_is_covered();
         bool is_reachable = km.reachability_analysis_via_gkm(filename, initl_ts,
                 final_ts);
         cout << "======================================================\n";

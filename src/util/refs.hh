@@ -7,13 +7,8 @@
 
 #ifndef REFS_HH_
 #define REFS_HH_
-
-#include "state.hh"
+#include "heads.hh"
 namespace gkm {
-
-using vertex = unsigned int;
-/// adjacency list
-using adj_list = map<thread_state, deque<thread_state>>;
 
 class Refs {
 public:
@@ -28,6 +23,8 @@ public:
 
     /// global variable for elapsed time
     static clock_t ELAPSED_TIME;
+
+    static const ushort omega;
 
 };
 } /* namespace SURA */

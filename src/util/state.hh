@@ -9,6 +9,7 @@
 #define STATE_HH_
 
 #include "algs.hh"
+#include "refs.hh"
 
 namespace gkm {
 
@@ -153,9 +154,14 @@ inline bool operator>(const thread_state& t1, const thread_state& t2) {
     return t2 < t1;
 }
 
-/// class global state
+using vertex = unsigned int;
+/// adjacency list
+using adj_list = map<thread_state, deque<thread_state>>;
+
+/// local parts: represent in counter abstraction
 using ca_locals = map<local_state, size_p>;
 
+/// class global state
 class global_state {
 public:
     inline global_state();
@@ -250,7 +256,9 @@ inline global_state::global_state(const shared_state& share,
 inline ostream& global_state::to_stream(ostream& out, const string& sep) const {
     out << "<" << this->share << "|";
     for (auto iloc = this->locals.begin(); iloc != this->locals.end(); ++iloc) {
-        out << "(" << iloc->first << "," << iloc->second << ")";
+        out << "(" << iloc->first << ","
+                << (iloc->second == Refs::omega ?
+                        "w" : std::to_string(iloc->second)) << ")";
     }
     out << ">";
     return out;
