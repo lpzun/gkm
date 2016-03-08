@@ -250,6 +250,11 @@ deque<global_state> GKM::step(const global_state& tau, size_p& spw) {
             const auto& successors = ifind->second;
             for (const auto& succ : successors) {
                 if (this->is_spawn_transition(curr, succ)) {
+                    if (spw > 0)
+                        spw--;
+                    else
+                        continue;
+
                     const auto& _Z = this->update_counter(succ.get_local(),
                             tau.get_locals());
                     images.emplace_back(succ.get_share(), _Z);
