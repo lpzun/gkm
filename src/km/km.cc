@@ -254,11 +254,12 @@ deque<global_state> GKM::step(const global_state& tau, size_p& spw) {
                         spw--;
                     else
                         continue;
-
+                    /// update counters in term of spawn  transition
                     const auto& _Z = this->update_counter(succ.get_local(),
                             tau.get_locals());
                     images.emplace_back(succ.get_share(), _Z);
                 } else {
+                    /// update counters in term of normal transition
                     const auto& _Z = this->update_counter(l, succ.get_local(),
                             tau.get_locals());
                     images.emplace_back(succ.get_share(), _Z);
