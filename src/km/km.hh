@@ -63,6 +63,9 @@ private:
     ca_locals update_counter(const local_state&_l, const ca_locals& Z);
 
     thread_state set_up_TS(const string& s_ts);
+
+    /// some testing functions
+    string parse_BP(const string& filename);
 };
 
 } /* namespace iotf */

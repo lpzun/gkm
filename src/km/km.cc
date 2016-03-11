@@ -10,13 +10,22 @@
 namespace gkm {
 
 GKM::GKM() {
-    // TODO Auto-generated constructor stub
+
 }
 
 GKM::~GKM() {
-    // TODO Auto-generated destructor stub
+
 }
 
+/**
+ * @brief the interface of forward reachability analysis
+ * @param filename
+ * @param s_initl
+ * @param s_final
+ * @param is_self_loop
+ * @return true : if the final state is reachable;
+ *         false: otherwise.
+ */
 bool GKM::reachability_analysis_via_gkm(const string& filename,
         const string& s_initl, const string& s_final,
         const bool& is_self_loop) {
@@ -25,7 +34,7 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
     } else {
         ifstream org_in;
         if (!refer::OPT_INPUT_TTS) {
-            //org_in.open(this->parse_BP(filename).c_str());
+            org_in.open(this->parse_BP(filename + ".tts").c_str());
             string line;
             std::getline(org_in, line);
         } else {
@@ -41,7 +50,8 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
 
         new_in >> thread_state::S >> thread_state::L;
         if (!refer::OPT_INPUT_TTS) {
-            final_TS = thread_state(thread_state::S - 1, thread_state::L - 1);
+            final_TS = this->set_up_TS(this->parse_BP(filename) + ".prop");
+            //cout << final_TS << endl;
         } else {
             initl_TS = this->set_up_TS(s_initl);
             final_TS = this->set_up_TS(s_final);
@@ -93,6 +103,17 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
 }
 
 /**
+ * @brief parse Boolean program: this is for testing
+ * @param filename
+ * @return
+ */
+string GKM::parse_BP(const string& filename) {
+    string file = filename;
+    file = file.substr(0, file.find_last_of("."));
+    return file;
+}
+
+/**
  * @brief setup initial or final thread state
  * @param s_ts
  * @return thread state
@@ -121,7 +142,7 @@ thread_state GKM::set_up_TS(const string& s_ts) {
  *         false: otherwise
  */
 bool GKM::standard_GKM() {
-    cout << __func__ << "=================\n";
+    //cout << __func__ << "=================\n";
     antichain worklist; /// the set of states that have yet to explore
     antichain explored; /// the set of states that have been  explored
     deque<global_state> sigma; /// the prefix of path leads to a state
@@ -131,7 +152,7 @@ bool GKM::standard_GKM() {
         const auto tau = worklist.front(); /// tau has to be  a copy
         worklist.pop_front(); /// remove current state from <worklist>
 
-        cout << "=================" << tau << "\n";
+        //cout << "=================" << tau << "\n";
 
         /// step 1: if upward(tau) is already explored, then
         ///         discard it, like the visited-mark in DFS
@@ -146,10 +167,10 @@ bool GKM::standard_GKM() {
             this->update_predecessors(tau, sigma);
             /// step 2.2: process the above obtained postimages
             for (const auto& _tau : images) {
-                cout << "-------b---------" << _tau << "\n";
+                //cout << "-------b---------" << _tau << "\n";
                 /// step 1: omega acceleration for _tau
                 const auto& wtau = this->w_acceleration(_tau, sigma);
-                cout << "-------a---------" << wtau << "\n";
+                //cout << "-------a---------" << wtau << "\n";
                 /// step 2: return true if wtau covers final state
                 if (this->is_reached(wtau))
                     return true;
@@ -438,7 +459,7 @@ bool GKM::is_spawn_transition(const thread_state& src,
  */
 bool GKM::is_reached(const global_state& s) {
     if (s.get_share() == this->final_TS.get_share()) {
-        cout << __func__ << " " << s << "\n";
+        cout << "cover: " << s << "\n";
         auto ifind = s.get_locals().find(final_TS.get_local());
         if (ifind != s.get_locals().cend() && ifind->second > 0)
             return true;
