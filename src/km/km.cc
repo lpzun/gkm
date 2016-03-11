@@ -35,7 +35,7 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
 	} else {
 		ifstream org_in;
 		if (!refer::OPT_INPUT_TTS) {
-			org_in.open(this->parse_BP(filename + ".tts").c_str());
+			org_in.open((this->parse_BP(filename) + ".tts").c_str());
 			string line;
 			std::getline(org_in, line);
 		} else {
@@ -53,7 +53,7 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
 
 		if (!refer::OPT_INPUT_TTS) {
 			final_TS = this->set_up_TS(this->parse_BP(filename) + ".prop");
-			cout << final_TS << endl;
+			// cout << final_TS << endl;
 		} else {
 			initl_TS = this->set_up_TS(s_initl);
 			final_TS = this->set_up_TS(s_final);
@@ -66,8 +66,8 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
 		local_state l1, l2;               /// local  states
 		string sep;                       /// separator
 		while (new_in >> s1 >> l1 >> sep >> s2 >> l2) {
-
-					cout << s1 << " " << l1 << " -> " << s2 << " " << l2 << "\n";
+			DBG_STD(
+					cout << s1 << " " << l1 << " -> " << s2 << " " << l2 << "\n")
 			if (!is_self_loop && s1 == s2 && l1 == l2) /// remove self loops
 				continue;
 
@@ -83,8 +83,6 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
 			}
 		}
 		new_in.close();
-if(original_TTS.empty())
-	cout<<"--------------------==-------------\n";
 		if (refer::OPT_PRINT_ADJ && refer::OPT_INPUT_TTS) {
 			for (auto isrc = original_TTS.begin(); isrc != original_TTS.end();
 					++isrc) {
