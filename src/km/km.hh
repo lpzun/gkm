@@ -28,8 +28,8 @@ public:
     /// testing methods
     void test_is_covered();
     void test_update_counter();
-private:
 
+private:
     thread_state initl_TS;
     thread_state final_TS;
     adj_list original_TTS;
@@ -37,12 +37,19 @@ private:
 
     bool standard_GKM();
     deque<global_state> step(const global_state& tau);
+    global_state w_acceleration(const global_state& tau,
+            const deque<global_state>& sigma);
+    void update_predecessors(const global_state& tau,
+            deque<global_state>& sigms);
 
     bool standard_FWS();
     bool standard_FWS(const size_p& n, const size_p& s);
     deque<global_state> step(const global_state& tau, size_p& spw);
 
     bool is_spawn_transition(const thread_state& src, const thread_state& dst);
+
+    bool is_maximal(const global_state& s, const antichain& explored);
+    void maximize(const global_state& s, antichain& worklist);
 
     bool is_reached(const global_state& s);
     bool is_covered(const global_state& s1, const global_state& s2);
@@ -51,15 +58,9 @@ private:
             const shared_state& _s, const local_state& _l, const ca_locals& Z);
     global_state update_counter(const shared_state& s, const shared_state& _s,
             const local_state& _l, const ca_locals& Z);
-
     ca_locals update_counter(const local_state& l, const local_state&_l,
             const ca_locals& Z);
     ca_locals update_counter(const local_state&_l, const ca_locals& Z);
-
-    global_state w_acceleration(const global_state& tau);
-
-    bool is_explored(const global_state& s, const antichain& explored);
-    void maximize(const global_state& s, antichain& worklist);
 
     thread_state set_up_TS(const string& s_ts);
 };

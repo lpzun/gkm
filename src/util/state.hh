@@ -168,34 +168,39 @@ public:
     inline global_state(const thread_state& t);
     inline global_state(const thread_state& t, const size_p& n);
     inline global_state(const shared_state& share, const ca_locals& locals);
+    inline global_state(const global_state& g, const uint& depth);
     inline global_state(const shared_state& share, const ca_locals& locals,
-            shared_ptr<const global_state> pi);
+            const uint& depth);
 
     ~global_state() {
     }
 
     ostream& to_stream(ostream& out = cout, const string& sep = "|") const;
 
-    inline const ca_locals& get_locals() const {
-        return locals;
-    }
-
-    inline const shared_ptr<const global_state>& get_pi() const {
-        return pi;
-    }
-
     inline shared_state get_share() const {
         return share;
     }
 
-    inline void set_pi(const shared_ptr<const global_state>& pi) {
-        this->pi = pi;
+    inline const ca_locals& get_locals() const {
+        return locals;
+    }
+
+    void set_locals(const local_state& l, const size_p& c) {
+        this->locals[l] = c;
+    }
+
+    uint get_depth() const {
+        return depth;
+    }
+
+    void set_depth(uint depth) {
+        this->depth = depth;
     }
 
 private:
     shared_state share;
     ca_locals locals;
-    shared_ptr<const global_state> pi;
+    uint depth;
 };
 
 /**
@@ -204,7 +209,7 @@ private:
  *        locals = empty map
  */
 inline global_state::global_state() :
-        share(0), locals(ca_locals()), pi(nullptr) {
+        share(0), locals(ca_locals()), depth(0) {
 }
 
 /**
@@ -212,7 +217,7 @@ inline global_state::global_state() :
  * @param t
  */
 inline global_state::global_state(const thread_state& t) :
-        share(t.get_share()), locals(ca_locals()), pi(nullptr) {
+        share(t.get_share()), locals(ca_locals()), depth(0) {
     locals.emplace(t.get_local(), 1);
 }
 
@@ -222,7 +227,7 @@ inline global_state::global_state(const thread_state& t) :
  * @param n
  */
 inline global_state::global_state(const thread_state& t, const size_p& n) :
-        share(t.get_share()), locals(ca_locals()), pi(nullptr) {
+        share(t.get_share()), locals(ca_locals()), depth(0) {
     locals.emplace(t.get_local(), n);
 }
 
@@ -233,18 +238,28 @@ inline global_state::global_state(const thread_state& t, const size_p& n) :
  */
 inline global_state::global_state(const shared_state& share,
         const ca_locals& locals) :
-        share(share), locals(locals), pi(nullptr) {
+        share(share), locals(locals), depth(0) {
+}
+
+/**
+ * @brief constructor with a shared state, local states and depth
+ * @param g    : global state
+ * @param depth: the depth of current global state
+ */
+inline global_state::global_state(const global_state& g, const uint& depth) :
+        share(g.get_share()), locals(g.get_locals()), depth(depth) {
+
 }
 
 /**
  * @brief constructor with a shared state, local states and pi
  * @param share : shared state
  * @param locals: local states represented in counter abstraction form
- * @param pi	: the father of current global state
+ * @param depth	: the depth of current global state
  */
 inline global_state::global_state(const shared_state& share,
-        const ca_locals& locals, shared_ptr<const global_state> pi) :
-        share(share), locals(locals), pi(pi) {
+        const ca_locals& locals, const uint& depth) :
+        share(share), locals(locals), depth(depth) {
 }
 
 /**
@@ -257,7 +272,7 @@ inline ostream& global_state::to_stream(ostream& out, const string& sep) const {
     out << "<" << this->share << "|";
     for (auto iloc = this->locals.begin(); iloc != this->locals.end(); ++iloc) {
         out << "(" << iloc->first << ","
-                << (iloc->second == Refs::omega ?
+                << (iloc->second == refer::omega ?
                         "w" : std::to_string(iloc->second)) << ")";
     }
     out << ">";

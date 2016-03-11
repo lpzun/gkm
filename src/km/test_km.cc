@@ -72,7 +72,7 @@ void GKM::test_is_covered() {
     z6.emplace(1, 3);
     z6.emplace(2, 3);
     z6.emplace(3, 3);
-    z6.emplace(4, 2);
+    z6.emplace(4, refer::omega);
 
     global_state g6(s1, z6);
     cout << g6 << "\n";
@@ -80,6 +80,8 @@ void GKM::test_is_covered() {
     if (is_covered(g1, g6)) {
         cout << "Passed!" << "\n";
     }
+
+
 }
 
 void GKM::test_update_counter() {

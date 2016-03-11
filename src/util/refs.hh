@@ -10,10 +10,10 @@
 #include "heads.hh"
 namespace gkm {
 
-class Refs {
+class refer {
 public:
-    Refs();
-    ~Refs();
+    refer();
+    ~refer();
 
     static bool OPT_PRINT_ALL;
     static bool OPT_PRINT_CMD;

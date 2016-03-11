@@ -11,7 +11,6 @@ namespace gkm {
 
 GKM::GKM() {
     // TODO Auto-generated constructor stub
-
 }
 
 GKM::~GKM() {
@@ -25,7 +24,7 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
         throw gkm_runtime_error("no input file");
     } else {
         ifstream org_in;
-        if (!Refs::OPT_INPUT_TTS) {
+        if (!refer::OPT_INPUT_TTS) {
             //org_in.open(this->parse_BP(filename).c_str());
             string line;
             std::getline(org_in, line);
@@ -41,13 +40,13 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
         ifstream new_in("/tmp/tmp.ttd.no_comment");
 
         new_in >> thread_state::S >> thread_state::L;
-        if (!Refs::OPT_INPUT_TTS) {
+        if (!refer::OPT_INPUT_TTS) {
             final_TS = thread_state(thread_state::S - 1, thread_state::L - 1);
         } else {
             initl_TS = this->set_up_TS(s_initl);
             final_TS = this->set_up_TS(s_final);
-            if (initl_TS == final_TS) {
-                return true;
+            if (initl_TS == final_TS) { /// if initial == final, then
+                return true;            /// return true immediately
             }
         }
 
@@ -74,7 +73,7 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
         }
         new_in.close();
 
-        if (Refs::OPT_PRINT_ADJ && Refs::OPT_INPUT_TTS) {
+        if (refer::OPT_PRINT_ADJ && refer::OPT_INPUT_TTS) {
             for (auto isrc = original_TTS.begin(); isrc != original_TTS.end();
                     ++isrc) {
                 for (auto idst = isrc->second.begin();
@@ -90,13 +89,13 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
     }
 //    if (this->is_connected())
 //        return true;
-    return this->standard_FWS();
+    return this->standard_GKM();
 }
 
 /**
  * @brief setup initial or final thread state
  * @param s_ts
- * @return
+ * @return thread state
  */
 thread_state GKM::set_up_TS(const string& s_ts) {
     /// setup the initial thread state
@@ -122,16 +121,50 @@ thread_state GKM::set_up_TS(const string& s_ts) {
  *         false: otherwise
  */
 bool GKM::standard_GKM() {
+    cout << __func__ << "=================\n";
     antichain worklist; /// the set of states that have yet to explore
     antichain explored; /// the set of states that have been  explored
-    while (!worklist.empty()) {
-        const auto tau = worklist.front(); /// tau has to be a copy
-        worklist.pop_front(); /// remove current state from worklist
+    deque<global_state> sigma; /// the prefix of path leads to a state
 
+    worklist.emplace_front(initl_TS, refer::omega); /// initialize worklist
+    while (!worklist.empty()) {
+        const auto tau = worklist.front(); /// tau has to be  a copy
+        worklist.pop_front(); /// remove current state from <worklist>
+
+        cout << "=================" << tau << "\n";
+
+        /// step 1: if upward(tau) is already explored, then
+        ///         discard it, like the visited-mark in DFS
+        if (!this->is_maximal(tau, explored))
+            continue;
+
+        /// step 2: compute all post images; check if final
+        ///         state is coverable; maximize <worklist>
         const auto& images = this->step(tau);
-        for (const auto& _tau : images) {
-            cout << _tau << "\n";
+        if (!images.empty()) {
+            /// step 2.1: update prefix of path leads to postimages
+            this->update_predecessors(tau, sigma);
+            /// step 2.2: process the above obtained postimages
+            for (const auto& _tau : images) {
+                cout << "-------b---------" << _tau << "\n";
+                /// step 1: omega acceleration for _tau
+                const auto& wtau = this->w_acceleration(_tau, sigma);
+                cout << "-------a---------" << wtau << "\n";
+                /// step 2: return true if wtau covers final state
+                if (this->is_reached(wtau))
+                    return true;
+                /// step 3: discard wtau when upward(wtau) exists
+                if (!this->is_maximal(wtau, worklist))
+                    continue;
+                /// step 4: maximize <worklist> in term of wtau
+                this->maximize(wtau, worklist);
+                /// step 5: insert wtau into the worklist
+                worklist.emplace_front(wtau, tau.get_depth() + 1);
+            }
         }
+        /// step 2.3: maximize the <explored> in term of tau
+        this->maximize(tau, explored);
+        explored.emplace_back(tau); /// insert into explored
     }
     return false;
 }
@@ -139,7 +172,7 @@ bool GKM::standard_GKM() {
 /**
  * @brief compute all post images of tau
  * @param tau
- * @return
+ * @return the list of post images
  */
 deque<global_state> GKM::step(const global_state& tau) {
     deque<global_state> images;
@@ -156,24 +189,98 @@ deque<global_state> GKM::step(const global_state& tau) {
                     const auto& _tau = this->update_counter(curr.get_share(),
                             succ.get_share(), succ.get_local(),
                             tau.get_locals());
-                    /// omega acceleration
-                    const auto& wtau = this->w_acceleration(_tau);
                     /// push it into images
-                    images.emplace_back(wtau);
+                    images.emplace_back(_tau);
                 } else {
                     /// update counters
                     const auto& _tau = this->update_counter(curr.get_share(),
                             curr.get_local(), succ.get_share(),
                             succ.get_local(), tau.get_locals());
-                    /// omega acceleration
-                    const auto& wtau = this->w_acceleration(_tau);
                     /// push it into images
-                    images.emplace_back(wtau);
+                    images.emplace_back(_tau);
                 }
             }
         }
     }
     return images;
+}
+
+/**
+ * @brief omega acceleration procedure
+ * @param tau  : current state
+ * @param sigma: the prefix path leads to _tau
+ * @return a state after omega acceleration
+ */
+global_state GKM::w_acceleration(const global_state& _tau,
+        const deque<global_state>& sigma) {
+    /// count all non-omega local states in _tau
+    ushort nacc = 0;
+    for (const auto& p : _tau.get_locals()) {
+        if (p.second < refer::omega)
+            ++nacc;
+    }
+    /// there is no local state that needs to accelerate
+    if (nacc == 0)
+        return _tau;
+
+    /// collect all local states that need to accelerate
+    set<local_state> wls;
+    /// step 1: iterate over all preceding global states
+    for (const auto& tau : sigma) {
+        if (this->is_covered(tau, _tau))
+            /// iterate over all local states residing in state _tau
+            for (const auto& p : _tau.get_locals())
+                /// if local state p.first's counter < w and it has
+                /// not been accelerated, then process it
+                if ((p.second < refer::omega)
+                        && (wls.find(p.first) == wls.end())) {
+                    auto ifind = tau.get_locals().find(p.first);
+                    if (ifind != tau.get_locals().end()
+                            && ifind->second < p.second) {
+                        wls.emplace(p.first); ///need to accelerate
+                    }
+                }
+        /// already collect all local states that need to accelerate
+        if (wls.size() == nacc)
+            break;
+    }
+    /// there is no way to accelerate _tau
+    if (wls.size() == 0)
+        return _tau;
+
+    /// copy all local states from _tau
+    auto locals = _tau.get_locals();
+    /// do acceleration: set the counter of l as w
+    for (const auto& l : wls) {
+        locals[l] = refer::omega;
+    }
+    /// return a new global states
+    return global_state(_tau.get_share(), locals, _tau.get_depth());
+}
+
+/**
+ * @brief update the prefix of path leads to state <tau>. The update
+ *        includes the following steps:
+ *        step 1. remove all global state whose depth >= tau.depth;
+ *        step 2. push tau into sigma that represents a trace leads
+ *                to tau, as all states whose discovering time are
+ *                later than tau's have already been removed.
+ *        NOTE: the backtracking operation has been covered
+ * @param tau  : the current state
+ * @param sigma: the prefix of path stored in DFS
+ */
+void GKM::update_predecessors(const global_state& tau,
+        deque<global_state>& sigma) {
+    auto ip = sigma.begin();
+    while (ip != sigma.end()) {
+        if (ip->get_depth() >= tau.get_depth())
+            break;
+        ++ip;
+    }
+    /// remove all global state whose depth >= tau.depth
+    sigma.erase(ip, sigma.end());
+    /// push tau into sigma that represents a trace leads to tau
+    sigma.emplace_back(tau);
 }
 
 /**
@@ -184,8 +291,8 @@ bool GKM::standard_FWS() {
     size_p n = 1, s = 1;
     while (n < 11) {
         if (this->standard_FWS(n, s)) {
-//            if (Refs::OPT_INPUT_TTS)
-//                this->standard_FWS(n + 1, s + 1);
+            if (refer::OPT_INPUT_TTS)
+                this->standard_FWS(n + 1, s + 1);
             return true;
         }
         ++n, ++s;
@@ -209,18 +316,18 @@ bool GKM::standard_FWS(const size_p& n, const size_p& s) {
         worklist.pop_front();
         /// step 1: if upward(tau) is already explored, then
         ///         discard it
-        if (this->is_explored(tau, explored))
+        if (!this->is_maximal(tau, explored))
             continue;
 
-        /// step 2: compute all post images; check is final
-        ///         state is coverable; mini
+        /// step 2: compute all post images; check if final
+        ///         state is coverable; maximize <worklist>
         const auto& images = this->step(tau, spw);
         for (const auto& _tau : images) {
             /// return true if _tau covers final state
             if (this->is_reached(_tau))
                 return true;
             /// if upward(_tau) already exists, then discard it
-            if (this->is_explored(_tau, worklist))
+            if (!this->is_maximal(_tau, worklist))
                 continue;
             /// maximize <worklist> in term of _tau
             this->maximize(_tau, worklist);
@@ -276,13 +383,13 @@ deque<global_state> GKM::step(const global_state& tau, size_p& spw) {
  * @param explored
  * @return
  */
-bool GKM::is_explored(const global_state& s, const antichain& explored) {
+bool GKM::is_maximal(const global_state& s, const antichain& explored) {
     for (auto itau = explored.begin(); itau != explored.end(); ++itau) {
         if (this->is_covered(s, *itau)) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 }
 
 /**
@@ -331,6 +438,7 @@ bool GKM::is_spawn_transition(const thread_state& src,
  */
 bool GKM::is_reached(const global_state& s) {
     if (s.get_share() == this->final_TS.get_share()) {
+        cout << __func__ << " " << s << "\n";
         auto ifind = s.get_locals().find(final_TS.get_local());
         if (ifind != s.get_locals().cend() && ifind->second > 0)
             return true;
@@ -392,7 +500,7 @@ global_state GKM::update_counter(const shared_state& s, const local_state& l,
 /// step 1: update or eliminate pair for the decremental local state
 ///         skip update if its counter is w as w - 1 = w
     auto idec = _Z.find(l);
-    if (idec != _Z.end() && idec->second != Refs::omega) {
+    if (idec != _Z.end() && idec->second != refer::omega) {
         idec->second -= 1;
         if (idec->second == 0) /// remove it if a counter ever becomes zero
             _Z.erase(idec);
@@ -401,19 +509,19 @@ global_state GKM::update_counter(const shared_state& s, const local_state& l,
 /// step 2: update or add pair for the incremental local state
     auto iinc = _Z.find(_l);
     if (iinc != _Z.end()) {
-        if (iinc->second != Refs::omega) {
-            if (idec->second == Refs::omega && s == _s) {
+        if (iinc->second != refer::omega) {
+            if (idec->second == refer::omega && s == _s) {
                 /// add with w if transition can be re-taken
-                iinc->second = Refs::omega;
+                iinc->second = refer::omega;
             } else {
                 /// otherwise, plus one
                 iinc->second += 1;
             }
         }
         /// skip update if its counter is w as w + 1 = w
-    } else if (idec->second == Refs::omega && s == _s) {
+    } else if (idec->second == refer::omega && s == _s) {
         /// add with w if transition can be re-taken
-        _Z.emplace(_l, Refs::omega);
+        _Z.emplace(_l, refer::omega);
     } else {
         /// create a new pair if exists no such pair in previous
         _Z.emplace(_l, 1);
@@ -436,9 +544,9 @@ global_state GKM::update_counter(const shared_state& s, const shared_state& _s,
 
     auto iinc = _Z.find(_l);
     if (iinc != _Z.end()) {
-        if (iinc->second != Refs::omega) {
+        if (iinc->second != refer::omega) {
             if (s == _s) {
-                iinc->second = Refs::omega;
+                iinc->second = refer::omega;
             } else {
                 iinc->second += 1;
             }
@@ -498,15 +606,6 @@ ca_locals GKM::update_counter(const local_state&_l, const ca_locals& Z) {
     }
 
     return _Z;
-}
-
-/**
- * @brief omega acceleration
- * @param tau: current state
- * @return a state after omega acceleration
- */
-global_state GKM::w_acceleration(const global_state& tau) {
-    return tau;
 }
 
 } /* namespace iotf */

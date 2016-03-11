@@ -13,10 +13,12 @@
 
 #include "km/km.hh"
 #include "util/cmd.hh"
+#include "km/dfs.hh"
 #include "util/refs.hh"
 
 using namespace gkm;
 using namespace std;
+using namespace dfs;
 
 int main(const int argc, const char * const * const argv) {
     try {
@@ -27,14 +29,14 @@ int main(const int argc, const char * const * const argv) {
             return 0;
         }
 
-        Refs::OPT_PRINT_ADJ = cmd.arg_bool(cmd_line::prob_inst_opts(),
+        refer::OPT_PRINT_ADJ = cmd.arg_bool(cmd_line::prob_inst_opts(),
                 "--adj-list");
-        Refs::OPT_INPUT_TTS = cmd.arg_bool(cmd_line::prob_inst_opts(),
+        refer::OPT_INPUT_TTS = cmd.arg_bool(cmd_line::prob_inst_opts(),
                 "--input-tts");
 
-        Refs::OPT_PRINT_CMD = cmd.arg_bool(cmd_line::other_opts(),
+        refer::OPT_PRINT_CMD = cmd.arg_bool(cmd_line::other_opts(),
                 "--cmd-line");
-        Refs::OPT_PRINT_ALL = cmd.arg_bool(cmd_line::other_opts(), "--all");
+        refer::OPT_PRINT_ALL = cmd.arg_bool(cmd_line::other_opts(), "--all");
 
         const string& filename = cmd.arg_value(cmd_line::prob_inst_opts(),
                 "--input-file");
@@ -42,6 +44,10 @@ int main(const int argc, const char * const * const argv) {
                 "--initial");
         const string& final_ts = cmd.arg_value(cmd_line::prob_inst_opts(),
                 "--target");
+
+//        DFS dfs;
+//        dfs.test_dfs();
+
         GKM km;
 //        km.test_is_covered();
         bool is_reachable = km.reachability_analysis_via_gkm(filename, initl_ts,

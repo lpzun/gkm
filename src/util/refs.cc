@@ -9,21 +9,21 @@
 
 namespace gkm {
 
-Refs::Refs() {
+refer::refer() {
 
 }
 
-Refs::~Refs() {
+refer::~refer() {
 
 }
-bool Refs::OPT_INPUT_TTS = false;
+bool refer::OPT_INPUT_TTS = false;
 
-bool Refs::OPT_PRINT_ADJ = false;
-bool Refs::OPT_PRINT_CMD = false;
-bool Refs::OPT_PRINT_ALL = false;
+bool refer::OPT_PRINT_ADJ = false;
+bool refer::OPT_PRINT_CMD = false;
+bool refer::OPT_PRINT_ALL = false;
 
-clock_t Refs::ELAPSED_TIME = clock();
+clock_t refer::ELAPSED_TIME = clock();
 
-const ushort Refs::omega = std::numeric_limits<ushort>::max();
+const ushort refer::omega = std::numeric_limits<ushort>::max();
 
 } /* namespace SURA */
