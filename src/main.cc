@@ -47,13 +47,14 @@ int main(const int argc, const char * const * const argv) {
 
 //        DFS dfs;
 //        dfs.test_dfs();
-
+if(refer::OPT_INPUT_TTS)
+	cout<<"I am here\n";
         GKM km;
 //        km.test_is_covered();
         bool is_reachable = km.reachability_analysis_via_gkm(filename, initl_ts,
                 final_ts);
         cout << "======================================================\n";
-        cout << " (" << final_ts << ")";
+        cout << " final state ";
         if (is_reachable)
             cout << " is reachable: verification failed!\n";
         else
