@@ -52,16 +52,18 @@ bool GKM::reachability_analysis_via_gkm(const string& filename,
         new_in >> thread_state::S >> thread_state::L;
 
         if (!refer::OPT_INPUT_TTS) {
-            final_TS = this->set_up_TS(this->parse_BP(filename) + ".prop");
+            final_TS.emplace_back(
+                    this->set_up_TS(this->parse_BP(filename) + ".prop"));
             // cout << final_TS << endl;
         } else {
-            initl_TS = this->set_up_TS(s_initl);
-            final_TS = this->set_up_TS(s_final);
+            initl_TS.emplace_back(this->set_up_TS(s_initl));
+            final_TS.emplace_back(this->set_up_TS(s_final));
         }
-        if (initl_TS == final_TS) { /// if initial == final, then
-            return true;            /// return true immediately
+        for (const auto& initl : this->initl_TS) {
+            for (const auto& final : this->final_TS)
+                if (initl == final) /// if initial == final, then
+                    return true;    /// return true immediately
         }
-
         shared_state s1, s2;              /// shared states
         local_state l1, l2;               /// local  states
         string sep;                       /// separator
@@ -147,7 +149,9 @@ bool GKM::standard_GKM() {
     antichain explored; /// the set of states that have been  explored
     deque<global_state> sigma; /// the prefix of path leads to a state
 
-    worklist.emplace_front(initl_TS, refer::omega); /// initialize worklist
+    for (const auto& initl : this->initl_TS)
+        worklist.emplace_front(initl, refer::omega); /// initialize worklist
+
     while (!worklist.empty()) {
         const auto tau = worklist.front(); /// tau has to be  a copy
         worklist.pop_front(); /// remove current state from <worklist>
@@ -323,15 +327,20 @@ bool GKM::standard_FWS() {
 
 /**
  * @brief this is based on breadth-first search
- * @param n
- * @param s
- * @return true if final state is reachable under n threads and
+ * @param n : the number of initial threads
+ * @param s : the number of spawn   threads
+ * @return bool
+ *         true : if final state is reachable under n threads and s spawns
+ *         false: otherwise
  */
 bool GKM::standard_FWS(const size_p& n, const size_p& s) {
-    auto spw = s;
+    auto spw = s;       /// the upper bound of spawns that can be fired
     antichain worklist;
     antichain explored;
-    worklist.emplace_back(initl_TS, n);
+
+    for (const auto& initl : initl_TS)
+        worklist.emplace_back(initl, n);
+
     while (!worklist.empty()) {
         const auto tau = worklist.front();
         worklist.pop_front();
@@ -344,6 +353,86 @@ bool GKM::standard_FWS(const size_p& n, const size_p& s) {
         ///         state is coverable; maximize <worklist>
         const auto& images = this->step(tau, spw);
         for (const auto& _tau : images) {
+            /// return true if _tau covers final state
+            if (this->is_reached(_tau))
+                return true;
+            /// if upward(_tau) already exists, then discard it
+            if (!this->is_maximal(_tau, worklist))
+                continue;
+            /// maximize <worklist> in term of _tau
+            this->maximize(_tau, worklist);
+            worklist.emplace_back(_tau); /// insert into worklist
+        }
+        /// maximize <explored> in term of tau
+        this->maximize(tau, explored);
+        explored.emplace_back(tau); /// insert into explored
+    }
+    return false;
+}
+
+/**
+ * @brief this version is transformed from <standard_FWS(n, s)>
+ * @param n       : the number of initial threads
+ * @param filename: the filename of Boolean program
+ * @return bool
+ *         true : if final state is reachable under n threads and s spawns
+ *         false: otherwise
+ */
+bool GKM::onthefly_FWS(const size_p& n, const string& filename) {
+#ifndef NDEBUG
+    cout << __func__ << " " << n << " " << filename << "\n";
+#endif
+    iotf::converter c;
+    /// Place 1: call the parser in API to parse Boolean programs.
+    ///          It returns a pair of lists that store thread states
+    const auto& P = iotf::parser::parse(filename, mode::POST);
+    const auto& initls = P.first;  /// the list of initial thread states
+    const auto& finals = P.second; /// the list of final   thread states
+
+    /// initialize worklist ...
+    for (const auto& ips : finals) {
+        const auto& iss = c.convert(ips);
+        final_TS.emplace_back(iss.first, iss.second);
+    }
+
+#ifndef NDEBUG
+    cout << __func__ << " initial states: " << "\n";
+    for (const auto& its : this->initls) {
+        cout << its << "\n";
+    }
+
+    cout << __func__ << " final states: " << "\n";
+    for (const auto& ifs : this->finals) {
+        cout << ifs << "\n";
+    }
+#endif
+
+    antichain worklist;
+    antichain explored;
+
+    /// initialize worklist ...
+    for (const auto& ips : initls) {
+        const auto& iss = c.convert(ips);
+        worklist.emplace_back(iss.first, iss.second, n);
+    }
+
+    /// Place 2: instantiate <post_image> to compute postimages
+    iotf::post_image image;
+    while (!worklist.empty()) {
+        const auto tau = worklist.front();
+        worklist.pop_front();
+        /// step 1: if upward(tau) is already explored, then
+        ///         discard it
+        if (!this->is_maximal(tau, explored))
+            continue;
+        /// step  2: compute all post images; check if final
+        ///          state is coverable; maximize <worklist>
+        /// Place 3: call the <step> in the instance <image>
+        const auto& images = image.step(
+                c.convert(std::make_pair(tau.get_share(), tau.get_locals())));
+        for (const auto& ps : images) {
+            const auto& ss = c.convert(ps);
+            global_state _tau(ss.first, ss.second);
             /// return true if _tau covers final state
             if (this->is_reached(_tau))
                 return true;
@@ -458,13 +547,14 @@ bool GKM::is_spawn_transition(const thread_state& src,
  *         false: otherwise
  */
 bool GKM::is_reached(const global_state& s) {
-    if (s.get_share() == this->final_TS.get_share()) {
-        if (refer::OPT_INPUT_TTS)
-            cout << "cover: " << s << "\n";
-        auto ifind = s.get_locals().find(final_TS.get_local());
-        if (ifind != s.get_locals().cend() && ifind->second > 0)
-            return true;
-    }
+    for (const auto& final : this->final_TS)
+        if (s.get_share() == final.get_share()) {
+            if (refer::OPT_INPUT_TTS)
+                cout << "cover: " << s << "\n";
+            auto ifind = s.get_locals().find(final.get_local());
+            if (ifind != s.get_locals().cend() && ifind->second > 0)
+                return true;
+        }
     return false;
 }
 

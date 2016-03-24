@@ -10,5 +10,5 @@
 
 namespace gkm {
 size_s thread_state::S; /// the size of shared state
-size_l thread_state::L; /// the size of local  state
+size_s thread_state::L; /// the size of local  state
 } /* namespace SURA */

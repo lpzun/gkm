@@ -13,27 +13,22 @@
 
 namespace gkm {
 
+/// define size of shared/local states
+typedef uint size_s;
 /// define local state
-typedef unsigned short local_state;
-/// define the size of local states
-typedef unsigned short size_l;
+typedef size_s local_state;
 
 /// define shared state
-typedef unsigned short shared_state;
-/// define size of shared states
-typedef unsigned short size_s;
+typedef uint shared_state;
 
 /// define the counter of thread state
 typedef unsigned short size_p;
-
-/// define the thread state id
-typedef unsigned int id_thread_state;
 
 /// class thread state
 class thread_state {
 public:
     static size_s S; /// the size of shared state
-    static size_l L; /// the size of local  state
+    static size_s L; /// the size of local  state
 
     inline thread_state();
     inline thread_state(const thread_state& t);
@@ -167,6 +162,8 @@ public:
     inline global_state();
     inline global_state(const thread_state& t);
     inline global_state(const thread_state& t, const size_p& n);
+    inline global_state(const shared_state& s, const local_state& l,
+            const size_p& n);
     inline global_state(const shared_state& share, const ca_locals& locals);
     inline global_state(const global_state& g, const uint& depth);
     inline global_state(const shared_state& share, const ca_locals& locals,
@@ -229,6 +226,12 @@ inline global_state::global_state(const thread_state& t) :
 inline global_state::global_state(const thread_state& t, const size_p& n) :
         share(t.get_share()), locals(ca_locals()), depth(0) {
     locals.emplace(t.get_local(), n);
+}
+
+inline global_state::global_state(const shared_state& s, const local_state& l,
+        const size_p& n) :
+        share(s), locals(ca_locals()), depth(0) {
+    locals.emplace(l, n);
 }
 
 /**

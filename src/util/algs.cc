@@ -23,8 +23,7 @@ short compare(clong& x, clong& y) {
  * @param m1
  * @param m2
  */
-short compare_map(const map<ushort, ushort>& m1,
-        const map<ushort, ushort>& m2) {
+short compare_map(const map<uint, ushort>& m1, const map<uint, ushort>& m2) {
     auto s1_iter = m1.begin(), s1_end = m1.end();
     auto s2_iter = m2.begin(), s2_end = m2.end();
     while (true) {
@@ -215,5 +214,5 @@ string firstTimeOrNot(bool& firstTime, const string& connective,
     return result;
 }
 
-}/// end of COMPARE
+}                     /// end of COMPARE
 

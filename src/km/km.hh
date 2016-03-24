@@ -12,6 +12,8 @@
 #include "../util/algs.hh"
 #include "../util/utilities.hh"
 
+#include "../../../iotf/src/iotf.hh"
+
 namespace gkm {
 
 using antichain = deque<global_state>;
@@ -30,12 +32,13 @@ public:
     void test_update_counter();
 
 private:
-    thread_state initl_TS;
-    thread_state final_TS;
+    deque<thread_state> initl_TS;
+    deque<thread_state> final_TS;
     adj_list original_TTS;
     adj_list orispawn_TTS;
 
     bool standard_GKM();
+    bool onthefly_GKM();
     deque<global_state> step(const global_state& tau);
     global_state w_acceleration(const global_state& tau,
             const deque<global_state>& sigma);
@@ -43,6 +46,7 @@ private:
             deque<global_state>& sigms);
 
     bool standard_FWS();
+    bool onthefly_FWS(const size_p& n, const string& filename);
     bool standard_FWS(const size_p& n, const size_p& s);
     deque<global_state> step(const global_state& tau, size_p& spw);
 
