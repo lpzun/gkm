@@ -48,7 +48,7 @@ int main(const int argc, const char * const * const argv) {
 //        DFS dfs;
 //        dfs.test_dfs();
         GKM km;
-//        km.test_is_covered();
+        km.test_is_covered();
         bool is_reachable = km.reachability_analysis_via_gkm(filename, initl_ts,
                 final_ts);
         cout << "======================================================\n";

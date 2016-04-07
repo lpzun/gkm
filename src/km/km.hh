@@ -15,8 +15,9 @@
 #include "../../../iotf/src/iotf.hh"
 
 namespace gkm {
-
-using antichain = deque<global_state>;
+using syst_state = global_state;
+using syst_thread = thread_state;
+using antichain = deque<syst_state>;
 
 class GKM {
 public:
@@ -32,41 +33,44 @@ public:
     void test_update_counter();
 
 private:
-    deque<thread_state> initl_TS;
-    deque<thread_state> final_TS;
+    deque<syst_thread> initl_TS;
+    deque<syst_thread> final_TS;
     adj_list original_TTS;
     adj_list orispawn_TTS;
 
     bool standard_GKM();
-    bool onthefly_GKM();
-    deque<global_state> step(const global_state& tau);
-    global_state w_acceleration(const global_state& tau,
-            const deque<global_state>& sigma);
-    void update_predecessors(const global_state& tau,
-            deque<global_state>& sigms);
+    deque<syst_state> step(const syst_state& tau);
+    syst_state w_acceleration(const syst_state& tau,
+            const deque<syst_state>& sigma);
+    void update_predecessors(const syst_state& tau, deque<syst_state>& sigms);
+
+    bool onthefly_GKM(const string& filename);
 
     bool standard_FWS();
-    bool onthefly_FWS(const size_p& n, const string& filename);
     bool standard_FWS(const size_p& n, const size_p& s);
-    deque<global_state> step(const global_state& tau, size_p& spw);
+    deque<syst_state> step(const syst_state& tau, size_p& spw);
 
-    bool is_spawn_transition(const thread_state& src, const thread_state& dst);
+    bool onthefly_FWS(const size_p& n, const string& filename);
 
-    bool is_maximal(const global_state& s, const antichain& explored);
-    void maximize(const global_state& s, antichain& worklist);
+    bool is_spawn_transition(const syst_thread& src, const syst_thread& dst);
+    bool is_maximal(const syst_state& s, const antichain& explored);
+    void maximize(const syst_state& s, antichain& worklist);
 
-    bool is_reached(const global_state& s);
-    bool is_covered(const global_state& s1, const global_state& s2);
+    bool is_reached(const syst_state& s);
+    bool is_covered(const syst_state& s1, const syst_state& s2);
 
-    global_state update_counter(const shared_state& s, const local_state& l,
+    syst_state update_counter(const shared_state& s, const local_state& l,
             const shared_state& _s, const local_state& _l, const ca_locals& Z);
-    global_state update_counter(const shared_state& s, const shared_state& _s,
+    syst_state update_counter(const shared_state& s, const shared_state& _s,
             const local_state& _l, const ca_locals& Z);
     ca_locals update_counter(const local_state& l, const local_state&_l,
             const ca_locals& Z);
     ca_locals update_counter(const local_state&_l, const ca_locals& Z);
 
-    thread_state set_up_TS(const string& s_ts);
+    void parse_TTS(const string& filename,
+            const string& s_initl, const string& s_final,
+            const bool& is_self_loop);
+    syst_thread set_up_TS(const string& s_ts);
 
     /// some testing functions
     string parse_BP(const string& filename);
