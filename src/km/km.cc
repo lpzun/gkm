@@ -209,10 +209,10 @@ bool GKM::onthefly_GKM(const string& filename) {
 #ifndef NDEBUG
     cout << __func__ << " " << n << " " << filename << "\n";
 #endif
-    iotf::converter c;
+    ijit::converter c;
     /// Place 1: call the parser in API to parse Boolean programs.
     ///          It returns a pair of lists that store thread states
-    const auto& P = iotf::parser::parse(filename, mode::POST);
+    const auto& P = ijit::parser::parse(filename, mode::POST);
 
     /// 1.1 setup the final thread states
     for (const auto& ips : P.second) {
@@ -224,13 +224,13 @@ bool GKM::onthefly_GKM(const string& filename) {
     antichain explored; /// the set of states that have been  explored
     deque<syst_state> sigma; /// the prefix of path leads to a state
 
-    /// 1.2 initialize worklist ...
+    /// 1.2 initialize worklist...
     for (const auto& ips : P.first) {
         const auto& iss = c.convert(ips);
         worklist.emplace_back(iss.first, iss.second, refer::omega);
     }
     /// Place 2: instantiate <post_image> to compute postimages
-    iotf::post_image image;
+    ijit::post_image image;
     while (!worklist.empty()) {
         const auto tau = worklist.front(); /// tau has to be  a copy
         worklist.pop_front(); /// remove current state from <worklist>
@@ -289,18 +289,29 @@ deque<syst_state> GKM::step(const syst_state& tau) {
             for (const auto& succ : successors) {
                 if (this->is_spawn_transition(curr, succ)) {
                     /// update counters
-                    const auto& _tau = this->update_counter(curr.get_share(),
+#ifdef W_ACCELERATION
+                    const auto& _Z = this->update_counter(curr.get_share(),
                             succ.get_share(), succ.get_local(),
                             tau.get_locals());
+#else
+
+                    const auto& _Z = this->update_counter(succ.get_local(),
+                            tau.get_locals());
+#endif
                     /// push it into images
-                    images.emplace_back(_tau);
+                    images.emplace_back(succ.get_share(), _Z);
                 } else {
                     /// update counters
-                    const auto& _tau = this->update_counter(curr.get_share(),
+#ifdef W_ACCELERATION
+                    const auto& _Z = this->update_counter(curr.get_share(),
                             curr.get_local(), succ.get_share(),
                             succ.get_local(), tau.get_locals());
+#else
+                    const auto& _Z = this->update_counter(curr.get_local(),
+                            succ.get_local(), tau.get_locals());
+#endif
                     /// push it into images
-                    images.emplace_back(_tau);
+                    images.emplace_back(succ.get_share(), _Z);
                 }
             }
         }
@@ -459,11 +470,11 @@ bool GKM::onthefly_FWS(const size_p& n, const string& filename) {
 #ifndef NDEBUG
     cout << __func__ << " " << n << " " << filename << "\n";
 #endif
-    iotf::converter c;
+    ijit::converter c;
     /// Place 1: call the parser in API to parse Boolean programs.
     ///          It returns a pair of lists that store initial and
     ///          final thread states: <deque<initial>, <deque<final>>
-    const auto& P = iotf::parser::parse(filename, mode::POST);
+    const auto& P = ijit::parser::parse(filename, mode::POST);
 
     /// setup the final thread states
     for (const auto& ips : P.second) {
@@ -493,7 +504,7 @@ bool GKM::onthefly_FWS(const size_p& n, const string& filename) {
     }
 
     /// Place 2: instantiate <post_image> to compute postimages
-    iotf::post_image image;
+    ijit::post_image image;
     while (!worklist.empty()) {
         const auto tau = worklist.front();
         worklist.pop_front();
@@ -677,13 +688,12 @@ bool GKM::is_covered(const syst_state& s1, const syst_state& s2) {
  * @param Z
  * @return global state
  */
-syst_state GKM::update_counter(const shared_state& s, const local_state& l,
+ca_locals GKM::update_counter(const shared_state& s, const local_state& l,
         const shared_state& _s, const local_state& _l, const ca_locals& Z) {
     if (l == _l)
-        return syst_state(_s, Z);
+        return Z;
 
     auto _Z = Z;
-
     /// step 1: update or eliminate pair for the decremental local state
     ///         skip update if its counter is w as w - 1 = w
     auto idec = _Z.find(l);
@@ -714,7 +724,7 @@ syst_state GKM::update_counter(const shared_state& s, const local_state& l,
         _Z.emplace(_l, 1);
     }
 
-    return syst_state(_s, _Z);
+    return _Z;
 }
 
 /**
@@ -725,7 +735,7 @@ syst_state GKM::update_counter(const shared_state& s, const local_state& l,
  * @param Z
  * @return global state
  */
-syst_state GKM::update_counter(const shared_state& s, const shared_state& _s,
+ca_locals GKM::update_counter(const shared_state& s, const shared_state& _s,
         const local_state& _l, const ca_locals& Z) {
     auto _Z = Z;
 
@@ -742,11 +752,11 @@ syst_state GKM::update_counter(const shared_state& s, const shared_state& _s,
         _Z.emplace(_l, 1);
     }
 
-    return syst_state(_s, _Z);
+    return _Z;
 }
 
 /**
- * @brief update counter with w acceleration
+ * @brief update counter with without acceleration
  * @param l : local state to decrement
  * @param _l: local state to increment
  * @param Z : counter abstraction representation
@@ -777,7 +787,7 @@ ca_locals GKM::update_counter(const local_state& l, const local_state&_l,
 }
 
 /**
- * @brief update counter with w acceleration
+ * @brief update counter without w acceleration
  * @param _l: local state to increment
  * @param Z : counter abstraction representation
  * @return counter abstraction representation after counter updates

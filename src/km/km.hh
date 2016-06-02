@@ -7,12 +7,16 @@
 
 #ifndef KM_KM_HH_
 #define KM_KM_HH_
+#ifndef W_ACCELERATION
+#define W_ACCELERATION
+#else
+#endif
 
 #include "../util/state.hh"
 #include "../util/algs.hh"
 #include "../util/utilities.hh"
 
-#include "../../../iotf/src/iotf.hh"
+#include "ijit.hh"
 
 namespace gkm {
 using syst_state = global_state;
@@ -59,17 +63,16 @@ private:
     bool is_reached(const syst_state& s);
     bool is_covered(const syst_state& s1, const syst_state& s2);
 
-    syst_state update_counter(const shared_state& s, const local_state& l,
+    ca_locals update_counter(const shared_state& s, const local_state& l,
             const shared_state& _s, const local_state& _l, const ca_locals& Z);
-    syst_state update_counter(const shared_state& s, const shared_state& _s,
+    ca_locals update_counter(const shared_state& s, const shared_state& _s,
             const local_state& _l, const ca_locals& Z);
     ca_locals update_counter(const local_state& l, const local_state&_l,
             const ca_locals& Z);
     ca_locals update_counter(const local_state&_l, const ca_locals& Z);
 
-    void parse_TTS(const string& filename,
-            const string& s_initl, const string& s_final,
-            const bool& is_self_loop);
+    void parse_TTS(const string& filename, const string& s_initl,
+            const string& s_final, const bool& is_self_loop);
     syst_thread set_up_TS(const string& s_ts);
 
     /// some testing functions
