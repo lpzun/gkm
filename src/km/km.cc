@@ -147,7 +147,8 @@ syst_thread GKM::set_up_TS(const string& s_ts) {
 }
 
 /**
- * @brief the standard Karp-Miller procedure
+ * @brief the standard Karp-Miller procedure that operates on thread-
+ *        transition system (TTS)
  * @return true : if the final state is coverable
  *         false: otherwise
  */
@@ -201,7 +202,8 @@ bool GKM::standard_GKM() {
 }
 
 /**
- * @brief the standard Karp-Miller procedure
+ * @brief the standard Karp-Miller procedure that operates on Boolean
+ *        programs (BP)
  * @return true : if the final state is coverable
  *         false: otherwise
  */
