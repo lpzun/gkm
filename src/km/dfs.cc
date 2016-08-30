@@ -10,14 +10,16 @@
 namespace dfs {
 
 DFS::DFS() {
-    // TODO Auto-generated constructor stub
-
 }
 
 DFS::~DFS() {
-    // TODO Auto-generated destructor stub
 }
 
+/**
+ *
+ * @param root
+ * @param graph
+ */
 void DFS::dfs_visit(const node& root, const adj_list& graph) {
     deque<node> worklist;
     deque<node> explored;
@@ -35,9 +37,8 @@ void DFS::dfs_visit(const node& root, const adj_list& graph) {
 
         auto ifind = graph.find(curr);
         if (ifind != graph.end()) {
-            const auto& successors = ifind->second;
-            for (const auto& succ : successors) {
-                if (!this->is_visited(succ, explored)) {
+            for (const auto& succ : ifind->second) {
+                if (!is_visited(succ, explored)) {
                     node s(succ.get_val(), curr.get_depth() + 1);
                     worklist.emplace_front(s);
                     cout << s << " prefix = ";
@@ -49,7 +50,6 @@ void DFS::dfs_visit(const node& root, const adj_list& graph) {
         }
         explored.emplace_back(curr);
     }
-
 }
 
 bool DFS::is_visited(const node& n, const deque<node>& explored) {
@@ -62,7 +62,7 @@ bool DFS::is_visited(const node& n, const deque<node>& explored) {
 
 void DFS::update_prefix(const node& n, deque<node>& prefix) {
     auto ip = prefix.begin();
-    while ( ip != prefix.end()) {
+    while (ip != prefix.end()) {
         if (ip->get_depth() >= n.get_depth()) {
             prefix.erase(ip, prefix.end());
             break;

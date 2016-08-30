@@ -56,11 +56,11 @@ inline bool operator ==(const node& n1, const node& n2) {
 }
 
 inline bool operator !=(const node& n1, const node& n2) {
-    return n1 != n2;
+    return !(n1 == n2);
 }
 
 inline ostream& operator <<(ostream& out, const node& n) {
-    out << n.get_val();// << " at depth = " << n.get_depth();
+    out << n.get_val(); // << " at depth = " << n.get_depth();
     return out;
 }
 
