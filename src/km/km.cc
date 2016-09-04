@@ -153,7 +153,6 @@ syst_thread GKM::set_up_TS(const string& s_ts) {
  *         false: otherwise
  */
 bool GKM::standard_GKM() {
-    //cout << __func__ << "================="<<final_TS<<"\n";
     antichain worklist; /// the set of states that have yet to explore
     antichain explored; /// the set of states that have been  explored
     deque<syst_state> sigma; /// the prefix of path leads to a state
@@ -164,8 +163,6 @@ bool GKM::standard_GKM() {
     while (!worklist.empty()) {
         const auto tau = worklist.front(); /// tau has to be  a copy
         worklist.pop_front(); /// remove current state from <worklist>
-
-        //cout << "=================" << tau << "\n";
 
         /// step 1: if upward(tau) is already explored, then
         ///         discard it, like the visited-mark in DFS
